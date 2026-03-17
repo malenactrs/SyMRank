@@ -14,24 +14,15 @@
       <div class="logo">
         <span class="logo-text">SyM<strong>Rank</strong></span>
       </div>
-
       <nav class="nav">
-        <button class="nav-btn active" id="btn-leer" onclick="showView('leer')">
-          Leer opiniones
-        </button>
-        <button class="nav-btn" id="btn-escribir" onclick="showView('escribir')">
-          Escribir opinión
-        </button>
+        <button class="nav-btn active" id="btn-leer" onclick="showView('leer')">Leer opiniones</button>
+        <button class="nav-btn" id="btn-escribir" onclick="showView('escribir')">Escribir opinión</button>
       </nav>
-
-      <!-- THEME TOGGLE -->
       <div class="theme-toggle-wrapper" title="Cambiar tema">
         <span class="theme-label">☀️</span>
         <label class="theme-toggle">
           <input type="checkbox" id="theme-switch" onchange="toggleTheme(this)" />
-          <span class="toggle-track">
-            <span class="toggle-thumb"></span>
-          </span>
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
         </label>
         <span class="theme-label">🌙</span>
       </div>
@@ -43,6 +34,15 @@
 
     <!-- ===== VIEW: LEER OPINIONES ===== -->
     <section id="view-leer" class="view active">
+
+      <!-- TOP 5 RANKING -->
+      <div class="ranking-section">
+        <h2 class="ranking-title">Top 5 Profesores</h2>
+        <div id="ranking-list" class="ranking-list">
+          <div class="spinner-wrapper-sm"><div class="spinner"></div></div>
+        </div>
+      </div>
+
       <div class="view-header">
         <h1 class="view-title">Opiniones de Profesores</h1>
         <p class="view-subtitle">Consultá qué dicen tus compañeros antes de cursar</p>
@@ -55,7 +55,7 @@
         <div class="search-group">
           <input type="text" id="search-materia" class="search-input" placeholder="Buscar por materia..." oninput="filtrarOpiniones()" />
         </div>
-        <button class="btn-clear-search" onclick="limpiarBusqueda()" title="Limpiar búsqueda">✕ Limpiar</button>
+        <button class="btn-clear-search" onclick="limpiarBusqueda()">Limpiar</button>
       </div>
 
       <div class="results-info" id="results-info"></div>
@@ -85,19 +85,17 @@
       </div>
 
       <div class="form-card">
-        <div id="toast-success" class="toast toast-success hidden">
-          Opinión publicada con éxito.
-        </div>
-        <div id="toast-error" class="toast toast-error hidden">
-          Hubo un error al publicar. Intentá de nuevo.
-        </div>
+        <div id="toast-success" class="toast toast-success hidden">Opinión publicada con éxito.</div>
+        <div id="toast-error"   class="toast toast-error hidden">Hubo un error al publicar. Intentá de nuevo.</div>
 
         <form id="opinion-form" onsubmit="submitOpinion(event)" novalidate>
 
           <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" for="f-profesor">Profesor/a <span class="required">*</span></label>
-              <input type="text" id="f-profesor" class="form-input" placeholder="Ej: García, Juan" required />
+            <div class="form-group" style="position:relative">
+              <label class="form-label" for="f-profesor">Profesor/a principal <span class="required">*</span></label>
+              <input type="text" id="f-profesor" class="form-input" placeholder="Ej: García, Juan"
+                     autocomplete="off" oninput="onProfesorInput(this, 'ac-profesor')" onblur="hideAC('ac-profesor')" required />
+              <ul class="autocomplete-list" id="ac-profesor"></ul>
               <span class="field-error" id="err-profesor"></span>
             </div>
 
@@ -170,6 +168,15 @@
             </div>
           </div>
 
+          <!-- PROFESORES ACOMPAÑANTES -->
+          <div class="form-group">
+            <div class="extra-prof-header">
+              <label class="form-label">Profesores acompañantes <span class="form-label-optional">(opcional, máx. 3)</span></label>
+              <button type="button" class="btn-add-prof" id="btn-add-prof" onclick="addProfesorExtra()">+ Agregar profesor</button>
+            </div>
+            <div id="profesores-extra"></div>
+          </div>
+
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="f-cuatrimestre">Cuatrimestre <span class="required">*</span></label>
@@ -181,7 +188,6 @@
               </select>
               <span class="field-error" id="err-cuatrimestre"></span>
             </div>
-
             <div class="form-group">
               <label class="form-label" for="f-anio">Año <span class="required">*</span></label>
               <input type="number" id="f-anio" class="form-input" placeholder="Ej: 2024" min="2000" max="2099" required />
@@ -203,14 +209,13 @@
               </select>
               <span class="field-error" id="err-dia"></span>
             </div>
-
             <div class="form-group">
               <label class="form-label" for="f-horario">Horario <span class="required">*</span></label>
               <select id="f-horario" class="form-select" required>
                 <option value="">— Seleccioná —</option>
-                <option value="300">Mañana (7–12h)</option>
-                <option value="600">Tarde (12–18h)</option>
-                <option value="900">Noche (18–22h)</option>
+                <option value="300">Mañana (08:00 - 12:00)</option>
+                <option value="600">Tarde (14:00 - 18:00)</option>
+                <option value="900">Noche (19:00 - 23:00)</option>
               </select>
               <span class="field-error" id="err-horario"></span>
             </div>
@@ -221,26 +226,20 @@
               Descripción <span class="required">*</span>
               <span class="char-counter" id="char-counter">0 / 1000</span>
             </label>
-            <textarea
-              id="f-descripcion"
-              class="form-textarea"
-              placeholder="Contá tu experiencia con este/a profesor/a: metodología, exámenes, trato, recomendaciones..."
-              maxlength="1000"
-              rows="5"
-              required
-              oninput="updateCharCounter()"
-            ></textarea>
+            <textarea id="f-descripcion" class="form-textarea"
+              placeholder="Contá tu experiencia: metodología, exámenes, trato, recomendaciones..."
+              maxlength="1000" rows="5" required oninput="updateCharCounter()"></textarea>
             <span class="field-error" id="err-descripcion"></span>
           </div>
 
           <div class="form-group">
             <label class="form-label">Puntuación <span class="required">*</span></label>
             <div class="star-rating" id="star-rating">
-              <button type="button" class="star" data-value="1" onclick="setStars(1)">★</button>
-              <button type="button" class="star" data-value="2" onclick="setStars(2)">★</button>
-              <button type="button" class="star" data-value="3" onclick="setStars(3)">★</button>
-              <button type="button" class="star" data-value="4" onclick="setStars(4)">★</button>
-              <button type="button" class="star" data-value="5" onclick="setStars(5)">★</button>
+              <button type="button" class="star" onclick="setStars(1)">★</button>
+              <button type="button" class="star" onclick="setStars(2)">★</button>
+              <button type="button" class="star" onclick="setStars(3)">★</button>
+              <button type="button" class="star" onclick="setStars(4)">★</button>
+              <button type="button" class="star" onclick="setStars(5)">★</button>
             </div>
             <span class="star-label" id="star-label">Sin calificación</span>
             <span class="field-error" id="err-puntuacion"></span>
@@ -260,11 +259,18 @@
 
   </main>
 
+  <!-- FOOTER CON CONTACTO -->
   <footer class="footer">
-    <p>SyMRank &copy; 2025 — Opiniones estudiantiles anónimas</p>
+    <div class="footer-inner">
+      <p class="footer-brand">SyMRank &copy; 2025 — Opiniones estudiantiles anónimas</p>
+      <div class="footer-contact">
+        <span class="footer-contact-label">Contacto:</span>
+        <a href="mailto:santiagowfigue@gmail.com" class="footer-link">santiagowfigue@gmail.com</a>
+        <a href="mailto:canterosmalena@gmail.com" class="footer-link">canterosmalena@gmail.com</a>
+      </div>
+    </div>
   </footer>
 
-  <!-- Firebase SDK (compat — funciona sin servidor local) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="app.js"></script>

@@ -669,13 +669,247 @@ body {
 
 /* ---- FOOTER ---- */
 .footer {
-  text-align: center;
-  padding: 20px;
-  color: var(--text-muted);
-  font-size: 0.82rem;
+  padding: 20px 24px;
   border-top: 1px solid var(--border);
   background: var(--bg-surface);
   transition: background 0.35s;
+}
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-brand {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.footer-contact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.footer-contact-label {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.footer-link {
+  color: var(--accent);
+  font-size: 0.82rem;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.footer-link:hover {
+  color: var(--accent-dark);
+  border-bottom-color: var(--accent-dark);
+}
+
+/* ---- RANKING TOP 5 ---- */
+.ranking-section {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius-xl);
+  padding: 24px 28px;
+  margin-bottom: 36px;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.35s, border 0.35s;
+}
+
+.ranking-title {
+  font-family: 'Rockwell', 'Rockwell Nova', Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  transition: background 0.35s, transform 0.15s;
+}
+
+.ranking-item:hover { transform: translateX(4px); }
+
+.ranking-pos {
+  font-size: 1.3rem;
+  width: 28px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.ranking-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ranking-nombre {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.ranking-stars { font-size: 0.9rem; }
+
+.ranking-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.ranking-prom {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--accent);
+}
+
+.ranking-cant {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.ranking-empty {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.spinner-wrapper-sm {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+/* ---- AUTOCOMPLETE ---- */
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-focus);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  list-style: none;
+  z-index: 50;
+  display: none;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-md);
+}
+
+.autocomplete-item {
+  padding: 9px 14px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.autocomplete-item:hover {
+  background: var(--accent-glow);
+  color: var(--accent-dark);
+}
+
+/* ---- PROFESORES EXTRA ---- */
+.extra-prof-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.form-label-optional {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.btn-add-prof {
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  border-radius: 50px;
+  padding: 5px 14px;
+  font-size: 0.83rem;
+  font-family: 'Rockwell', 'Rockwell Nova', Georgia, serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-add-prof:hover:not(:disabled) {
+  background: var(--accent-glow);
+}
+
+.extra-prof-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.extra-prof-row .form-input { flex: 1; }
+
+.btn-remove-prof {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-remove-prof:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239,68,68,0.08);
+}
+
+/* ---- CARD: PROFESORES SECUNDARIOS ---- */
+.card-sec-prof {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: -6px;
 }
 
 /* ---- RESPONSIVE ---- */
@@ -683,7 +917,6 @@ body {
   .header-inner { padding: 0 16px; gap: 12px; }
   .logo-text { font-size: 1.1rem; }
   .nav-btn { padding: 7px 12px; font-size: 0.83rem; }
-  .nav-btn .nav-icon { display: none; }
   .main { padding: 24px 16px 48px; }
   .view-title { font-size: 1.55rem; }
   .form-row { grid-template-columns: 1fr; }
@@ -693,9 +926,11 @@ body {
   .form-actions { flex-direction: column-reverse; }
   .btn-primary, .btn-secondary { width: 100%; text-align: center; }
   .theme-toggle-wrapper .theme-label { display: none; }
+  .footer-inner { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .ranking-section { padding: 18px 16px; }
+  .ranking-item { gap: 10px; padding: 8px 12px; }
 }
 
 @media (max-width: 420px) {
   .header-inner { height: 60px; }
-  .logo-icon { display: none; }
 }
