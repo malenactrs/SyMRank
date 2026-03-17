@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProfeRank — Opiniones sobre Profesores</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">🎓</span>
+        <span class="logo-text">Profe<strong>Rank</strong></span>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-btn active" id="btn-leer" onclick="showView('leer')">
+          <span class="nav-icon">📋</span> Leer opiniones
+        </button>
+        <button class="nav-btn" id="btn-escribir" onclick="showView('escribir')">
+          <span class="nav-icon">✍️</span> Escribir opinión
+        </button>
+      </nav>
+
+      <!-- THEME TOGGLE -->
+      <div class="theme-toggle-wrapper" title="Cambiar tema">
+        <span class="theme-label">☀️</span>
+        <label class="theme-toggle">
+          <input type="checkbox" id="theme-switch" onchange="toggleTheme(this)" />
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+        <span class="theme-label">🌙</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ===== VIEW: LEER OPINIONES ===== -->
+    <section id="view-leer" class="view active">
+      <div class="view-header">
+        <h1 class="view-title">Opiniones de Profesores</h1>
+        <p class="view-subtitle">Consultá qué dicen tus compañeros antes de cursar</p>
+      </div>
+
+      <div class="search-bar-container">
+        <div class="search-group">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-profesor" class="search-input" placeholder="Buscar por profesor..." oninput="filtrarOpiniones()" />
+        </div>
+        <div class="search-group">
+          <span class="search-icon">📚</span>
+          <input type="text" id="search-materia" class="search-input" placeholder="Buscar por materia..." oninput="filtrarOpiniones()" />
+        </div>
+        <button class="btn-clear-search" onclick="limpiarBusqueda()" title="Limpiar búsqueda">✕ Limpiar</button>
+      </div>
+
+      <div class="results-info" id="results-info"></div>
+
+      <div id="loading-spinner" class="spinner-wrapper">
+        <div class="spinner"></div>
+        <p>Cargando opiniones...</p>
+      </div>
+
+      <div id="cards-container" class="cards-grid"></div>
+
+      <div id="no-results" class="no-results hidden">
+        <span class="no-results-icon">🔎</span>
+        <p>No se encontraron opiniones con esa búsqueda.</p>
+      </div>
+
+      <div id="empty-state" class="empty-state hidden">
+        <span class="empty-icon">📭</span>
+        <p>Todavía no hay opiniones publicadas.</p>
+        <button class="btn-primary" onclick="showView('escribir')">Sé el primero en opinar</button>
+      </div>
+    </section>
+
+    <!-- ===== VIEW: ESCRIBIR OPINIÓN ===== -->
+    <section id="view-escribir" class="view">
+      <div class="view-header">
+        <h1 class="view-title">Publicar Opinión</h1>
+        <p class="view-subtitle">Tu opinión ayuda a otros estudiantes a elegir mejor</p>
+      </div>
+
+      <div class="form-card">
+        <div id="toast-success" class="toast toast-success hidden">
+          ✅ ¡Opinión publicada con éxito!
+        </div>
+        <div id="toast-error" class="toast toast-error hidden">
+          ❌ Hubo un error al publicar. Intentá de nuevo.
+        </div>
+
+        <form id="opinion-form" onsubmit="submitOpinion(event)" novalidate>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-profesor">Profesor/a <span class="required">*</span></label>
+              <input type="text" id="f-profesor" class="form-input" placeholder="Ej: García, Juan" required />
+              <span class="field-error" id="err-profesor"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="f-materia">Materia <span class="required">*</span></label>
+              <select id="f-materia" class="form-select" required>
+                <option value="">— Seleccioná una materia —</option>
+                <option>Análisis Matemático I</option>
+                <option>Análisis Matemático II</option>
+                <option>Álgebra y Geometría Analítica</option>
+                <option>Física I</option>
+                <option>Física II</option>
+                <option>Química General</option>
+                <option>Probabilidad y Estadística</option>
+                <option>Algoritmos y Estructuras de Datos</option>
+                <option>Programación Orientada a Objetos</option>
+                <option>Bases de Datos</option>
+                <option>Sistemas Operativos</option>
+                <option>Redes de Computadoras</option>
+                <option>Ingeniería de Software</option>
+                <option>Arquitectura de Computadoras</option>
+                <option>Electrónica Digital</option>
+                <option>Circuitos Eléctricos</option>
+                <option>Resistencia de Materiales</option>
+                <option>Termodinámica</option>
+                <option>Economía y Gestión</option>
+                <option>Inglés Técnico</option>
+                <option>Otra materia</option>
+              </select>
+              <span class="field-error" id="err-materia"></span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-cuatrimestre">Cuatrimestre <span class="required">*</span></label>
+              <select id="f-cuatrimestre" class="form-select" required>
+                <option value="">— Seleccioná —</option>
+                <option value="Primer">1er cuatrimestre</option>
+                <option value="Segundo">2do cuatrimestre</option>
+                <option value="Tercero">3er cuatrimestre</option>
+              </select>
+              <span class="field-error" id="err-cuatrimestre"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="f-anio">Año <span class="required">*</span></label>
+              <input type="number" id="f-anio" class="form-input" placeholder="Ej: 2024" min="2000" max="2099" required />
+              <span class="field-error" id="err-anio"></span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-dia">Día de cursada <span class="required">*</span></label>
+              <select id="f-dia" class="form-select" required>
+                <option value="">— Seleccioná —</option>
+                <option value="1">Lunes</option>
+                <option value="2">Martes</option>
+                <option value="3">Miércoles</option>
+                <option value="4">Jueves</option>
+                <option value="5">Viernes</option>
+                <option value="6">Sábado</option>
+              </select>
+              <span class="field-error" id="err-dia"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="f-horario">Horario <span class="required">*</span></label>
+              <select id="f-horario" class="form-select" required>
+                <option value="">— Seleccioná —</option>
+                <option value="300">Mañana (7–12h)</option>
+                <option value="600">Tarde (12–18h)</option>
+                <option value="900">Noche (18–22h)</option>
+              </select>
+              <span class="field-error" id="err-horario"></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="f-descripcion">
+              Descripción <span class="required">*</span>
+              <span class="char-counter" id="char-counter">0 / 1000</span>
+            </label>
+            <textarea
+              id="f-descripcion"
+              class="form-textarea"
+              placeholder="Contá tu experiencia con este/a profesor/a: metodología, exámenes, trato, recomendaciones..."
+              maxlength="1000"
+              rows="5"
+              required
+              oninput="updateCharCounter()"
+            ></textarea>
+            <span class="field-error" id="err-descripcion"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Puntuación <span class="required">*</span></label>
+            <div class="star-rating" id="star-rating">
+              <button type="button" class="star" data-value="1" onclick="setStars(1)">★</button>
+              <button type="button" class="star" data-value="2" onclick="setStars(2)">★</button>
+              <button type="button" class="star" data-value="3" onclick="setStars(3)">★</button>
+              <button type="button" class="star" data-value="4" onclick="setStars(4)">★</button>
+              <button type="button" class="star" data-value="5" onclick="setStars(5)">★</button>
+            </div>
+            <span class="star-label" id="star-label">Sin calificación</span>
+            <span class="field-error" id="err-puntuacion"></span>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="resetForm()">Limpiar</button>
+            <button type="submit" class="btn-primary" id="submit-btn">
+              <span id="submit-text">Publicar opinión</span>
+              <span id="submit-loading" class="hidden">Publicando...</span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>ProfeRank &copy; 2025 — Opiniones estudiantiles anónimas</p>
+  </footer>
+
+  <!-- Firebase SDK -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
