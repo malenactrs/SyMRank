@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SyMRank — Opiniones sobre Profesores</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-text">SyM<strong>Rank</strong></span>
+      </div>
+      <nav class="nav">
+        <button class="nav-btn active" id="btn-leer" onclick="showView('leer')">Leer opiniones</button>
+        <button class="nav-btn" id="btn-escribir" onclick="showView('escribir')">Escribir opinión</button>
+      </nav>
+      <div class="theme-toggle-wrapper" title="Cambiar tema">
+        <span class="theme-label">☀️</span>
+        <label class="theme-toggle">
+          <input type="checkbox" id="theme-switch" onchange="toggleTheme(this)" />
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </label>
+        <span class="theme-label">🌙</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ===== VIEW: LEER OPINIONES ===== -->
+    <section id="view-leer" class="view active">
+      <div class="leer-layout">
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="leer-main">
+          <div class="view-header">
+            <h1 class="view-title">Opiniones de Profesores</h1>
+            <p class="view-subtitle">Consultá qué dicen tus compañeros antes de cursar</p>
+          </div>
+
+          <div class="search-bar-container">
+            <div class="search-group">
+              <input type="text" id="search-profesor" class="search-input" placeholder="Buscar por profesor..." oninput="filtrarOpiniones()" />
+            </div>
+            <div class="search-group">
+              <input type="text" id="search-materia" class="search-input" placeholder="Buscar por materia..." oninput="filtrarOpiniones()" />
+            </div>
+            <button class="btn-clear-search" onclick="limpiarBusqueda()">Limpiar</button>
+          </div>
+
+          <div class="results-info" id="results-info"></div>
+
+          <div id="loading-spinner" class="spinner-wrapper">
+            <div class="spinner"></div>
+            <p>Cargando opiniones...</p>
+          </div>
+
+          <div id="cards-container" class="cards-grid"></div>
+
+          <div id="no-results" class="no-results hidden">
+            <p>No se encontraron opiniones con esa búsqueda.</p>
+          </div>
+
+          <div id="empty-state" class="empty-state hidden">
+            <p>Todavía no hay opiniones publicadas.</p>
+            <button class="btn-primary" onclick="showView('escribir')">Sé el primero en opinar</button>
+          </div>
+        </div>
+
+        <!-- SIDEBAR: TOP 5 -->
+        <aside class="leer-sidebar">
+          <div class="ranking-section">
+            <h2 class="ranking-title">Top 5</h2>
+            <div id="ranking-list" class="ranking-list">
+              <div class="spinner-wrapper-sm"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ===== VIEW: ESCRIBIR OPINIÓN ===== -->
+    <section id="view-escribir" class="view">
+      <div class="view-header">
+        <h1 class="view-title">Publicar Opinión</h1>
+        <p class="view-subtitle">Tu opinión ayuda a otros estudiantes a elegir mejor</p>
+      </div>
+
+      <div class="form-card">
+        <div id="toast-success" class="toast toast-success hidden">Opinión publicada con éxito.</div>
+        <div id="toast-error"   class="toast toast-error hidden">Hubo un error al publicar. Intentá de nuevo.</div>
+
+        <form id="opinion-form" onsubmit="submitOpinion(event)" novalidate>
+
+          <div class="form-row">
+            <div class="form-group" style="position:relative">
+              <label class="form-label" for="f-profesor">Profesor/a principal <span class="required">*</span></label>
+              <input type="text" id="f-profesor" class="form-input" placeholder="Ej: García, Juan"
+                     autocomplete="off" oninput="onProfesorInput(this, 'ac-profesor')" onblur="hideAC('ac-profesor')" required />
+              <ul class="autocomplete-list" id="ac-profesor"></ul>
+              <span class="field-error" id="err-profesor"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="f-materia">Materia <span class="required">*</span></label>
+              <select id="f-materia" class="form-select" required>
+                <option value="">— Seleccioná una materia —</option>
+                <option>Matemática Discreta</option>
+                <option>Análisis Matemático I</option>
+                <option>Programación Inicial</option>
+                <option>Introducción a los Sistemas de Información</option>
+                <option>Sistemas de Numeración</option>
+                <option>Principios de Calidad de Software</option>
+                <option>Álgebra y Geometría Analítica I</option>
+                <option>Física I</option>
+                <option>Programación Estructurada Básica</option>
+                <option>Introducción a la Gestión de Requisitos</option>
+                <option>Fundamentos de Sistemas Embebidos</option>
+                <option>Introducción a Proyectos Informáticos</option>
+                <option>Responsabilidad Social Universitaria</option>
+                <option>Análisis Matemático II</option>
+                <option>Física II</option>
+                <option>Tópicos de Programación</option>
+                <option>Bases de Datos</option>
+                <option>Análisis de Sistemas</option>
+                <option>Arquitectura de Computadoras</option>
+                <option>Taller de Integración</option>
+                <option>Análisis Matemático III</option>
+                <option>Algoritmos y Estructuras de Datos</option>
+                <option>Bases de Datos Aplicada</option>
+                <option>Principios de Diseño de Sistemas</option>
+                <option>Redes de Computadoras</option>
+                <option>Gestión de las Organizaciones</option>
+                <option>Álgebra y Geometría Analítica II</option>
+                <option>Paradigmas de Programación</option>
+                <option>Requisitos Avanzados</option>
+                <option>Diseño de Software</option>
+                <option>Sistemas Operativos</option>
+                <option>Seguridad de la Información</option>
+                <option>Práctica Profesional Supervisada</option>
+                <option>Probabilidad y Estadística</option>
+                <option>Programación Avanzada</option>
+                <option>Arquitecturas de Sistemas Software</option>
+                <option>Virtualización de Hardware</option>
+                <option>Auditoría y Legislación</option>
+                <option>Estadística Aplicada</option>
+                <option>Autómatas y Gramática</option>
+                <option>Programación Concurrente</option>
+                <option>Gestión Aplicada al Desarrollo de Software I</option>
+                <option>Sistemas Operativos Avanzados</option>
+                <option>Gestión de Proyectos</option>
+                <option>Matemática Aplicada</option>
+                <option>Lenguajes y Compiladores</option>
+                <option>Inteligencia Artificial</option>
+                <option>Gestión Aplicada al Desarrollo de Software II</option>
+                <option>Seguridad Aplicada y Forensia</option>
+                <option>Gestión de la Calidad en Procesos de Sistemas</option>
+                <option>Inteligencia Artificial Aplicada</option>
+                <option>Innovación y Emprendedorismo</option>
+                <option>Ciencia de Datos</option>
+                <option>Proyecto Final de Carrera</option>
+                <option>Inglés Transversal Nivel I</option>
+                <option>Inglés Transversal Nivel II</option>
+                <option>Inglés Transversal Nivel III</option>
+                <option>Inglés Transversal Nivel IV</option>
+                <option>Computación Transversal Nivel I</option>
+                <option>Computación Transversal Nivel II</option>
+              </select>
+              <span class="field-error" id="err-materia"></span>
+            </div>
+          </div>
+
+          <!-- PROFESORES ACOMPAÑANTES -->
+          <div class="form-group">
+            <div class="extra-prof-header">
+              <label class="form-label">Profesores acompañantes <span class="form-label-optional">(opcional, máx. 3)</span></label>
+              <button type="button" class="btn-add-prof" id="btn-add-prof" onclick="addProfesorExtra()">+ Agregar profesor</button>
+            </div>
+            <div id="profesores-extra"></div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-cuatrimestre">Cuatrimestre <span class="required">*</span></label>
+              <select id="f-cuatrimestre" class="form-select" required>
+                <option value="">— Seleccioná —</option>
+                <option value="Primer">1er cuatrimestre</option>
+                <option value="Segundo">2do cuatrimestre</option>
+                <option value="Tercero">3er cuatrimestre</option>
+              </select>
+              <span class="field-error" id="err-cuatrimestre"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-anio">Año <span class="required">*</span></label>
+              <input type="number" id="f-anio" class="form-input" placeholder="Ej: 2024" min="2000" max="2099" required />
+              <span class="field-error" id="err-anio"></span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-dia">Día de cursada <span class="required">*</span></label>
+              <select id="f-dia" class="form-select" required>
+                <option value="">— Seleccioná —</option>
+                <option value="1">Lunes</option>
+                <option value="2">Martes</option>
+                <option value="3">Miércoles</option>
+                <option value="4">Jueves</option>
+                <option value="5">Viernes</option>
+                <option value="6">Sábado</option>
+              </select>
+              <span class="field-error" id="err-dia"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-horario">Horario <span class="required">*</span></label>
+              <select id="f-horario" class="form-select" required>
+                <option value="">— Seleccioná —</option>
+                <option value="300">Mañana (08:00 - 12:00)</option>
+                <option value="600">Tarde (14:00 - 18:00)</option>
+                <option value="900">Noche (19:00 - 23:00)</option>
+              </select>
+              <span class="field-error" id="err-horario"></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="f-descripcion">
+              Descripción <span class="required">*</span>
+              <span class="char-counter" id="char-counter">0 / 1000</span>
+            </label>
+            <textarea id="f-descripcion" class="form-textarea"
+              placeholder="Contá tu experiencia: metodología, exámenes, trato, recomendaciones..."
+              maxlength="1000" rows="5" required oninput="updateCharCounter()"></textarea>
+            <span class="field-error" id="err-descripcion"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Puntuación <span class="required">*</span></label>
+            <div class="star-rating" id="star-rating">
+              <button type="button" class="star" onclick="setStars(1)">★</button>
+              <button type="button" class="star" onclick="setStars(2)">★</button>
+              <button type="button" class="star" onclick="setStars(3)">★</button>
+              <button type="button" class="star" onclick="setStars(4)">★</button>
+              <button type="button" class="star" onclick="setStars(5)">★</button>
+            </div>
+            <span class="star-label" id="star-label">Sin calificación</span>
+            <span class="field-error" id="err-puntuacion"></span>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="resetForm()">Limpiar</button>
+            <button type="submit" class="btn-primary" id="submit-btn">
+              <span id="submit-text">Publicar opinión</span>
+              <span id="submit-loading" class="hidden">Publicando...</span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER CON CONTACTO -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <p class="footer-brand">SyMRank &copy; 2025 — Opiniones estudiantiles anónimas</p>
+      <div class="footer-contact">
+        <span class="footer-contact-label">Contacto:</span>
+        <a href="/cdn-cgi/l/email-protection#384b59564c51595f574f5e515f4d5d785f55595154165b5755" class="footer-link"><span class="__cf_email__" data-cfemail="c0b3a1aeb4a9a1a7afb7a6a9a7b5a580a7ada1a9aceea3afad">[email&#160;protected]</span></a>
+        <a href="/cdn-cgi/l/email-protection#3b585a554f5e495448565a575e555a7b5c565a525715585456" class="footer-link"><span class="__cf_email__" data-cfemail="3251535c4657405d415f535e575c5372555f535b5e1c515d5f">[email&#160;protecte
