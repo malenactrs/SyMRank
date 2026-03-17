@@ -1,32 +1,21 @@
 // =========================================
 //   PROFERANK — app.js
-//   Firebase Firestore + SPA logic
+//   Firebase Compat SDK (sin servidor local)
 // =========================================
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  orderBy,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ---- FIREBASE CONFIG ----
 // 🔧 Reemplazá con tu configuración real de Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyB8JiRmUeSOsPvy3bMu6uOiqb6rakqnFac",
-  authDomain: "symrank-3d60d.firebaseapp.com",
-  projectId: "symrank-3d60d",
-  storageBucket: "symrank-3d60d.firebasestorage.app",
-  messagingSenderId: "890670128013",
-  appId: "1:890670128013:web:1a9fa6c62f8b8af9d9bbc4"
+  apiKey:            "TU_API_KEY",
+  authDomain:        "TU_PROYECTO.firebaseapp.com",
+  projectId:         "TU_PROJECT_ID",
+  storageBucket:     "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId:             "TU_APP_ID"
 };
 
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 // =========================================
 //   ESTADO GLOBAL
@@ -60,8 +49,8 @@ function showView(viewName) {
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
 
-  document.getElementById(`view-${viewName}`).classList.add("active");
-  document.getElementById(`btn-${viewName}`).classList.add("active");
+  document.getElementById("view-" + viewName).classList.add("active");
+  document.getElementById("btn-" + viewName).classList.add("active");
 
   if (viewName === "leer") cargarOpiniones();
 }
@@ -70,20 +59,19 @@ function showView(viewName) {
 //   LEER OPINIONES
 // =========================================
 async function cargarOpiniones() {
-  const spinner   = document.getElementById("loading-spinner");
-  const container = document.getElementById("cards-container");
+  const spinner    = document.getElementById("loading-spinner");
+  const container  = document.getElementById("cards-container");
   const emptyState = document.getElementById("empty-state");
   const noResults  = document.getElementById("no-results");
 
   spinner.style.display = "block";
-  container.innerHTML   = "";
+  container.innerHTML = "";
   emptyState.classList.add("hidden");
   noResults.classList.add("hidden");
   document.getElementById("results-info").textContent = "";
 
   try {
-    const q   = query(collection(db, "opiniones"), orderBy("fecha", "desc"));
-    const snap = await getDocs(q);
+    const snap = await db.collection("opiniones").orderBy("fecha", "desc").get();
 
     todasLasOpiniones = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -98,7 +86,7 @@ async function cargarOpiniones() {
 
   } catch (err) {
     spinner.style.display = "none";
-    container.innerHTML = `<p style="color:#ef4444;padding:20px">⚠️ Error al cargar opiniones: ${err.message}. Verificá la configuración de Firebase.</p>`;
+    container.innerHTML = '<p style="color:#ef4444;padding:20px">⚠️ Error al cargar opiniones: ' + err.message + '. Verificá la configuración de Firebase en app.js.</p>';
     console.error("Firebase error:", err);
   }
 }
@@ -119,32 +107,29 @@ function renderOpiniones(lista) {
   }
 
   noResults.classList.add("hidden");
-  infoEl.textContent = `${lista.length} opinión${lista.length !== 1 ? "es" : ""} encontrada${lista.length !== 1 ? "s" : ""}`;
+  infoEl.textContent = lista.length + " opinión" + (lista.length !== 1 ? "es" : "") + " encontrada" + (lista.length !== 1 ? "s" : "");
 
-  lista.forEach((op, i) => {
+  lista.forEach(function(op, i) {
     const card = document.createElement("div");
     card.className = "opinion-card";
-    card.style.animationDelay = `${i * 40}ms`;
+    card.style.animationDelay = (i * 40) + "ms";
 
-    const starsHtml = renderStars(op.puntuacion);
+    const starsHtml  = renderStars(op.puntuacion);
     const diaHorario = decodeDiaHorario(op.diaHorario);
     const fechaStr   = formatFecha(op.fecha);
 
-    card.innerHTML = `
-      <div class="card-header">
-        <div class="card-profesor">👨‍🏫 ${escHtml(op.profesor)}</div>
-        <div class="card-stars" title="${op.puntuacion}/5 estrellas">${starsHtml}</div>
-      </div>
-      <div>
-        <span class="card-materia">📚 ${escHtml(op.materia)}</span>
-      </div>
-      <div class="card-meta">
-        <span class="meta-tag">📅 ${escHtml(op.cuatrimestre)}er cuatrimestre ${op.anio}</span>
-        <span class="meta-tag">🕐 ${diaHorario}</span>
-      </div>
-      <div class="card-descripcion">${escHtml(op.descripcion)}</div>
-      <div class="card-fecha">Publicado el ${fechaStr}</div>
-    `;
+    card.innerHTML =
+      '<div class="card-header">' +
+        '<div class="card-profesor">' + escHtml(op.profesor) + '</div>' +
+        '<div class="card-stars" title="' + op.puntuacion + '/5 estrellas">' + starsHtml + '</div>' +
+      '</div>' +
+      '<div><span class="card-materia">' + escHtml(op.materia) + '</span></div>' +
+      '<div class="card-meta">' +
+        '<span class="meta-tag">' + escHtml(op.cuatrimestre) + ' cuatrimestre ' + op.anio + '</span>' +
+        '<span class="meta-tag">' + diaHorario + '</span>' +
+      '</div>' +
+      '<div class="card-descripcion">' + escHtml(op.descripcion) + '</div>' +
+      '<div class="card-fecha">Publicado el ' + fechaStr + '</div>';
 
     container.appendChild(card);
   });
@@ -155,9 +140,9 @@ function filtrarOpiniones() {
   const busqProf = document.getElementById("search-profesor").value.trim().toLowerCase();
   const busqMat  = document.getElementById("search-materia").value.trim().toLowerCase();
 
-  const filtradas = todasLasOpiniones.filter(op => {
-    const matchProf = !busqProf || op.profesor?.toLowerCase().includes(busqProf);
-    const matchMat  = !busqMat  || op.materia?.toLowerCase().includes(busqMat);
+  const filtradas = todasLasOpiniones.filter(function(op) {
+    const matchProf = !busqProf || (op.profesor || "").toLowerCase().includes(busqProf);
+    const matchMat  = !busqMat  || (op.materia  || "").toLowerCase().includes(busqMat);
     return matchProf && matchMat;
   });
 
@@ -178,8 +163,8 @@ async function submitOpinion(e) {
 
   if (!validarFormulario()) return;
 
-  const dia     = parseInt(document.getElementById("f-dia").value);
-  const horario = parseInt(document.getElementById("f-horario").value);
+  const dia      = parseInt(document.getElementById("f-dia").value);
+  const horario  = parseInt(document.getElementById("f-horario").value);
   const diaHorario = (dia * 1000) + horario;
 
   const data = {
@@ -187,16 +172,16 @@ async function submitOpinion(e) {
     materia:      document.getElementById("f-materia").value,
     cuatrimestre: document.getElementById("f-cuatrimestre").value,
     anio:         parseInt(document.getElementById("f-anio").value),
-    diaHorario,
+    diaHorario:   diaHorario,
     descripcion:  document.getElementById("f-descripcion").value.trim(),
     puntuacion:   selectedStars,
-    fecha:        serverTimestamp()
+    fecha:        firebase.firestore.FieldValue.serverTimestamp()
   };
 
   setSubmitLoading(true);
 
   try {
-    await addDoc(collection(db, "opiniones"), data);
+    await db.collection("opiniones").add(data);
     showToast("success");
     resetForm();
   } catch (err) {
@@ -210,9 +195,7 @@ async function submitOpinion(e) {
 // ---- VALIDACIÓN ----
 function validarFormulario() {
   let ok = true;
-  const campos = ["profesor", "materia", "cuatrimestre", "anio", "dia", "horario", "descripcion"];
-
-  campos.forEach(id => clearError(id));
+  ["profesor","materia","cuatrimestre","anio","dia","horario","descripcion"].forEach(clearError);
   clearError("puntuacion");
 
   const profesor = document.getElementById("f-profesor").value.trim();
@@ -246,35 +229,32 @@ function validarFormulario() {
 }
 
 function showError(id, msg) {
-  const el  = document.getElementById(`err-${id}`);
-  const inp = document.getElementById(`f-${id}`);
+  const el  = document.getElementById("err-" + id);
+  const inp = document.getElementById("f-" + id);
   if (el)  el.textContent = msg;
   if (inp) inp.classList.add("error");
 }
 
 function clearError(id) {
-  const el  = document.getElementById(`err-${id}`);
-  const inp = document.getElementById(`f-${id}`);
+  const el  = document.getElementById("err-" + id);
+  const inp = document.getElementById("f-" + id);
   if (el)  el.textContent = "";
   if (inp) inp.classList.remove("error");
 }
 
-// ---- RESET ----
 function resetForm() {
   document.getElementById("opinion-form").reset();
   selectedStars = 0;
   updateStarUI(0);
   updateCharCounter();
-  ["profesor","materia","cuatrimestre","anio","dia","horario","descripcion","puntuacion"]
-    .forEach(id => clearError(id));
+  ["profesor","materia","cuatrimestre","anio","dia","horario","descripcion","puntuacion"].forEach(clearError);
 }
 
-// ---- SUBMIT STATE ----
 function setSubmitLoading(loading) {
   const btn = document.getElementById("submit-btn");
   const txt = document.getElementById("submit-text");
   const ld  = document.getElementById("submit-loading");
-  btn.disabled   = loading;
+  btn.disabled = loading;
   txt.classList.toggle("hidden", loading);
   ld.classList.toggle("hidden", !loading);
 }
@@ -288,9 +268,9 @@ function setStars(n) {
 }
 
 function updateStarUI(n) {
-  const stars = document.querySelectorAll(".star");
+  const stars  = document.querySelectorAll(".star");
   const labels = ["Sin calificación", "Muy malo", "Malo", "Regular", "Bueno", "Excelente"];
-  stars.forEach((s, i) => {
+  stars.forEach(function(s, i) {
     s.classList.toggle("filled", i < n);
     s.classList.toggle("active", i < n);
   });
@@ -304,7 +284,7 @@ function updateCharCounter() {
   const txt = document.getElementById("f-descripcion").value;
   const len = txt.length;
   const counter = document.getElementById("char-counter");
-  counter.textContent = `${len} / 1000`;
+  counter.textContent = len + " / 1000";
   counter.className = "char-counter";
   if (len > 900)  counter.classList.add("warn");
   if (len >= 1000) counter.classList.add("danger");
@@ -314,53 +294,48 @@ function updateCharCounter() {
 //   TOAST
 // =========================================
 function showToast(type) {
-  const el = document.getElementById(`toast-${type}`);
+  const el = document.getElementById("toast-" + type);
   el.classList.remove("hidden");
-  setTimeout(() => el.classList.add("hidden"), 4000);
+  setTimeout(function() { el.classList.add("hidden"); }, 4000);
 }
 
 // =========================================
 //   HELPERS
 // =========================================
 function renderStars(n) {
-  return [...Array(5)].map((_, i) => `<span style="color:${i < n ? '#f59e0b' : '#c8e6c9'}">${i < n ? '★' : '☆'}</span>`).join("");
+  var html = "";
+  for (var i = 0; i < 5; i++) {
+    html += '<span style="color:' + (i < n ? "#f59e0b" : "#c8e6c9") + '">' + (i < n ? "★" : "☆") + '</span>';
+  }
+  return html;
 }
 
 function decodeDiaHorario(code) {
   if (!code) return "—";
-  const dias    = { 1:"Lunes", 2:"Martes", 3:"Miércoles", 4:"Jueves", 5:"Viernes", 6:"Sábado" };
-  const horarios = { 300:"Mañana", 600:"Tarde", 900:"Noche" };
-  const dia     = Math.floor(code / 1000);
-  const horario = code % 1000;
-  return `${dias[dia] || "?"} - ${horarios[horario] || "?"}`;
+  var dias     = { 1:"Lunes", 2:"Martes", 3:"Miércoles", 4:"Jueves", 5:"Viernes", 6:"Sábado" };
+  var horarios = { 300:"Mañana", 600:"Tarde", 900:"Noche" };
+  var dia      = Math.floor(code / 1000);
+  var horario  = code % 1000;
+  return (dias[dia] || "?") + " - " + (horarios[horario] || "?");
 }
 
 function formatFecha(ts) {
   if (!ts) return "—";
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleDateString("es-AR", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
+  var d = (ts.toDate) ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString("es-AR", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit"
+  });
 }
 
 function escHtml(str) {
   if (!str) return "";
   return String(str)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
-
-// =========================================
-//   EXPOSICIÓN GLOBAL
-// =========================================
-window.showView       = showView;
-window.filtrarOpiniones = filtrarOpiniones;
-window.limpiarBusqueda  = limpiarBusqueda;
-window.submitOpinion    = submitOpinion;
-window.resetForm        = resetForm;
-window.setStars         = setStars;
-window.updateCharCounter = updateCharCounter;
-window.toggleTheme      = toggleTheme;
 
 // ---- INIT ----
 cargarOpiniones();
