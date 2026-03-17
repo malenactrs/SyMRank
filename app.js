@@ -6,12 +6,13 @@
 // ---- FIREBASE CONFIG ----
 // 🔧 Reemplazá con tu configuración real de Firebase
 const firebaseConfig = {
-  apiKey:            "TU_API_KEY",
-  authDomain:        "TU_PROYECTO.firebaseapp.com",
-  projectId:         "TU_PROJECT_ID",
-  storageBucket:     "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId:             "TU_APP_ID"
+  apiKey: "AIzaSyB8JiRmUeSOsPvy3bMu6uOiqb6rakqnFac",
+  authDomain: "symrank-3d60d.firebaseapp.com",
+  projectId: "symrank-3d60d",
+  storageBucket: "symrank-3d60d.firebasestorage.app",
+  messagingSenderId: "890670128013",
+  appId: "1:890670128013:web:1a9fa6c62f8b8af9d9bbc4",
+  measurementId: "G-Y5S1E6CC7Z"
 };
 
 firebase.initializeApp(firebaseConfig);
