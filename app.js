@@ -5,12 +5,12 @@
 
 // ---- FIREBASE CONFIG ----
 const firebaseConfig = {
-  apiKey: "AIzaSyB8JiRmUeSOsPvy3bMu6uOiqb6rakqnFac",
-  authDomain: "symrank-3d60d.firebaseapp.com",
-  projectId: "symrank-3d60d",
-  storageBucket: "symrank-3d60d.firebasestorage.app",
-  messagingSenderId: "890670128013",
-  appId: "1:890670128013:web:1a9fa6c62f8b8af9d9bbc4"
+  apiKey:            "TU_API_KEY",
+  authDomain:        "TU_PROYECTO.firebaseapp.com",
+  projectId:         "TU_PROJECT_ID",
+  storageBucket:     "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId:             "TU_APP_ID"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -132,9 +132,12 @@ function renderOpiniones(lista) {
     // Profesores secundarios
     var secHtml = "";
     if (Array.isArray(op.profesoresSecundarios) && op.profesoresSecundarios.length > 0) {
-      var secNames = op.profesoresSecundarios.filter(Boolean).map(escHtml).join(", ");
-      if (secNames) {
-        secHtml = '<div class="card-sec-prof">Acompañantes: ' + secNames + '</div>';
+      var validos = op.profesoresSecundarios.filter(Boolean);
+      if (validos.length > 0) {
+        var tags = validos.map(function(p) {
+          return '<span class="card-sec-tag">' + escHtml(p) + '</span>';
+        }).join("");
+        secHtml = '<div class="card-sec-prof"><span class="card-sec-label">Acomp.</span>' + tags + '</div>';
       }
     }
 

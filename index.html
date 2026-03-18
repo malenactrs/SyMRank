@@ -34,46 +34,54 @@
 
     <!-- ===== VIEW: LEER OPINIONES ===== -->
     <section id="view-leer" class="view active">
+      <div class="leer-layout">
 
-      <!-- TOP 5 RANKING -->
-      <div class="ranking-section">
-        <h2 class="ranking-title">Top 5 Profesores</h2>
-        <div id="ranking-list" class="ranking-list">
-          <div class="spinner-wrapper-sm"><div class="spinner"></div></div>
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="leer-main">
+          <div class="view-header">
+            <h1 class="view-title">Opiniones de Profesores</h1>
+            <p class="view-subtitle">Consultá qué dicen tus compañeros antes de cursar</p>
+          </div>
+
+          <div class="search-bar-container">
+            <div class="search-group">
+              <input type="text" id="search-profesor" class="search-input" placeholder="Buscar por profesor..." oninput="filtrarOpiniones()" />
+            </div>
+            <div class="search-group">
+              <input type="text" id="search-materia" class="search-input" placeholder="Buscar por materia..." oninput="filtrarOpiniones()" />
+            </div>
+            <button class="btn-clear-search" onclick="limpiarBusqueda()">Limpiar</button>
+          </div>
+
+          <div class="results-info" id="results-info"></div>
+
+          <div id="loading-spinner" class="spinner-wrapper">
+            <div class="spinner"></div>
+            <p>Cargando opiniones...</p>
+          </div>
+
+          <div id="cards-container" class="cards-grid"></div>
+
+          <div id="no-results" class="no-results hidden">
+            <p>No se encontraron opiniones con esa búsqueda.</p>
+          </div>
+
+          <div id="empty-state" class="empty-state hidden">
+            <p>Todavía no hay opiniones publicadas.</p>
+            <button class="btn-primary" onclick="showView('escribir')">Sé el primero en opinar</button>
+          </div>
         </div>
-      </div>
 
-      <div class="view-header">
-        <h1 class="view-title">Opiniones de Profesores</h1>
-        <p class="view-subtitle">Consultá qué dicen tus compañeros antes de cursar</p>
-      </div>
+        <!-- SIDEBAR: TOP 5 -->
+        <aside class="leer-sidebar">
+          <div class="ranking-section">
+            <h2 class="ranking-title">Top 5</h2>
+            <div id="ranking-list" class="ranking-list">
+              <div class="spinner-wrapper-sm"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </aside>
 
-      <div class="search-bar-container">
-        <div class="search-group">
-          <input type="text" id="search-profesor" class="search-input" placeholder="Buscar por profesor..." oninput="filtrarOpiniones()" />
-        </div>
-        <div class="search-group">
-          <input type="text" id="search-materia" class="search-input" placeholder="Buscar por materia..." oninput="filtrarOpiniones()" />
-        </div>
-        <button class="btn-clear-search" onclick="limpiarBusqueda()">Limpiar</button>
-      </div>
-
-      <div class="results-info" id="results-info"></div>
-
-      <div id="loading-spinner" class="spinner-wrapper">
-        <div class="spinner"></div>
-        <p>Cargando opiniones...</p>
-      </div>
-
-      <div id="cards-container" class="cards-grid"></div>
-
-      <div id="no-results" class="no-results hidden">
-        <p>No se encontraron opiniones con esa búsqueda.</p>
-      </div>
-
-      <div id="empty-state" class="empty-state hidden">
-        <p>Todavía no hay opiniones publicadas.</p>
-        <button class="btn-primary" onclick="showView('escribir')">Sé el primero en opinar</button>
       </div>
     </section>
 
@@ -265,14 +273,5 @@
       <p class="footer-brand">SyMRank &copy; 2025 — Opiniones estudiantiles anónimas</p>
       <div class="footer-contact">
         <span class="footer-contact-label">Contacto:</span>
-        <a href="mailto:santiagowfigue@gmail.com" class="footer-link">santiagowfigue@gmail.com</a>
-        <a href="mailto:canterosmalena@gmail.com" class="footer-link">canterosmalena@gmail.com</a>
-      </div>
-    </div>
-  </footer>
-
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+        <a href="/cdn-cgi/l/email-protection#384b59564c51595f574f5e515f4d5d785f55595154165b5755" class="footer-link"><span class="__cf_email__" data-cfemail="c0b3a1aeb4a9a1a7afb7a6a9a7b5a580a7ada1a9aceea3afad">[email&#160;protected]</span></a>
+        <a href="/cdn-cgi/l/email-protection#3b585a554f5e495448565a575e555a7b5c565a525715585456" class="footer-link"><span class="__cf_email__" data-cfemail="3251535c4657405d415f535e575c5372555f535b5e1c515d5f">[email&#160;protecte

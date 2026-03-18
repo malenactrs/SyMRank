@@ -716,91 +716,113 @@ body {
   border-bottom-color: var(--accent-dark);
 }
 
-/* ---- RANKING TOP 5 ---- */
+/* ---- LAYOUT LEER: MAIN + SIDEBAR ---- */
+.leer-layout {
+  display: grid;
+  grid-template-columns: 1fr 230px;
+  gap: 28px;
+  align-items: start;
+}
+
+.leer-main { min-width: 0; }
+
+.leer-sidebar {
+  position: sticky;
+  top: 88px; /* debajo del header fijo */
+}
+
+/* ---- RANKING TOP 5 (sidebar) ---- */
 .ranking-section {
   background: var(--bg-surface);
-  border: 1.5px solid var(--border-card);
-  border-radius: var(--radius-xl);
-  padding: 24px 28px;
-  margin-bottom: 36px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 16px 16px 14px;
   box-shadow: var(--shadow-sm);
   transition: background 0.35s, border 0.35s;
 }
 
 .ranking-title {
   font-family: 'Rockwell', 'Rockwell Nova', Georgia, serif;
-  font-size: 1.1rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  color: var(--text-secondary);
-  margin-bottom: 16px;
-  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
 }
 
 .ranking-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .ranking-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
   align-items: center;
-  gap: 14px;
+  gap: 8px;
   background: var(--bg-input);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 10px 16px;
-  transition: background 0.35s, transform 0.15s;
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  transition: background 0.2s, border-color 0.2s;
+  cursor: default;
 }
 
-.ranking-item:hover { transform: translateX(4px); }
+.ranking-item:hover {
+  border-color: var(--border-focus);
+  background: var(--accent-glow);
+}
 
 .ranking-pos {
-  font-size: 1.3rem;
-  width: 28px;
-  flex-shrink: 0;
+  font-size: 0.85rem;
   text-align: center;
+  line-height: 1;
 }
 
 .ranking-info {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
+  min-width: 0;
 }
 
 .ranking-nombre {
-  font-weight: 700;
-  font-size: 0.95rem;
+  font-weight: 600;
+  font-size: 0.8rem;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.ranking-stars { font-size: 0.9rem; }
+.ranking-stars { font-size: 0.7rem; line-height: 1; }
 
 .ranking-stats {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: 1px;
 }
 
 .ranking-prom {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   color: var(--accent);
 }
 
 .ranking-cant {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .ranking-empty {
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   text-align: center;
-  padding: 10px 0;
+  padding: 8px 0;
 }
 
 .spinner-wrapper-sm {
@@ -906,13 +928,58 @@ body {
 
 /* ---- CARD: PROFESORES SECUNDARIOS ---- */
 .card-sec-prof {
-  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: -4px;
+  flex-wrap: wrap;
+}
+
+.card-sec-label {
+  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--text-muted);
-  font-style: italic;
-  margin-top: -6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.card-sec-tag {
+  display: inline-block;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--accent-dark);
+  border-radius: 50px;
+  padding: 2px 10px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .card-sec-tag {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--accent-bright);
 }
 
 /* ---- RESPONSIVE ---- */
+@media (max-width: 900px) {
+  .leer-layout {
+    grid-template-columns: 1fr;
+  }
+  .leer-sidebar {
+    position: static;
+    order: -1; /* sidebar arriba en mobile */
+  }
+  .ranking-section {
+    padding: 14px 16px;
+  }
+  .ranking-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+  }
+}
+
 @media (max-width: 720px) {
   .header-inner { padding: 0 16px; gap: 12px; }
   .logo-text { font-size: 1.1rem; }
@@ -927,8 +994,7 @@ body {
   .btn-primary, .btn-secondary { width: 100%; text-align: center; }
   .theme-toggle-wrapper .theme-label { display: none; }
   .footer-inner { flex-direction: column; align-items: flex-start; gap: 8px; }
-  .ranking-section { padding: 18px 16px; }
-  .ranking-item { gap: 10px; padding: 8px 12px; }
+  .ranking-list { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 420px) {
