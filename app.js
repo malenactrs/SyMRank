@@ -10,9 +10,9 @@ const firebaseConfig = {
   projectId: "symrank-3d60d",
   storageBucket: "symrank-3d60d.firebasestorage.app",
   messagingSenderId: "890670128013",
-  appId: "1:890670128013:web:1a9fa6c62f8b8af9d9bbc4"
+  appId: "1:890670128013:web:1a9fa6c62f8b8af9d9bbc4",
+  measurementId: "G-Y5S1E6CC7Z"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
