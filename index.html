@@ -11,7 +11,7 @@
   <!-- HEADER -->
   <header class="header">
     <div class="header-inner">
-      <div class="logo">
+      <div class="logo" id="logo-symrank" onclick="handleLogoClick()" style="cursor:pointer;user-select:none" title="SyMRank">
         <span class="logo-text">SyM<strong>Rank</strong></span>
       </div>
       <nav class="nav">
@@ -268,10 +268,31 @@
   </main>
 
   <footer class="footer">
+    <div class="footer-contact-section">
+      <div class="footer-contact-inner">
+        <p class="footer-contact-title">✉ Contacto &amp; Soporte</p>
+        <div class="footer-contact-emails">
+          <a class="footer-contact-pill" href="mailto:canterosmalena@gmail.com">
+            <span class="footer-contact-pill-icon">📧</span>
+            <span class="footer-contact-pill-text">canterosmalena@gmail.com</span>
+          </a>
+          <a class="footer-contact-pill" href="mailto:santiagowfigue@gmail.com">
+            <span class="footer-contact-pill-icon">📧</span>
+            <span class="footer-contact-pill-text">santiagowfigue@gmail.com</span>
+          </a>
+        </div>
+      </div>
+    </div>
     <div class="footer-inner">
       <p class="footer-brand">SyMRank &copy; 2025 — Opiniones estudiantiles</p>
     </div>
   </footer>
+
+  <!-- EASTER EGG: ARCOIRIS -->
+  <div id="rainbow-overlay" class="rainbow-overlay">
+    <div class="rainbow-arc"></div>
+    <span class="rainbow-emoji">🌈</span>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>

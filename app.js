@@ -10,9 +10,9 @@ const firebaseConfig = {
   projectId: "symrank-3d60d",
   storageBucket: "symrank-3d60d.firebasestorage.app",
   messagingSenderId: "890670128013",
-  appId: "1:890670128013:web:1a9fa6c62f8b8af9d9bbc4",
-  measurementId: "G-Y5S1E6CC7Z"
+  appId: "1:890670128013:web:1a9fa6c62f8b8af9d9bbc4"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
@@ -503,10 +503,10 @@ function renderStars(n) {
 function decodeDiaHorario(code) {
   if (!code) return "—";
   var dias     = { 1:"Lunes", 2:"Martes", 3:"Miércoles", 4:"Jueves", 5:"Viernes", 6:"Sábado" };
-  var horarios = { 300:"Mañana (08:00 - 12:00)", 600:"Tarde (14:00 - 18:00)", 900:"Noche (19:00 - 23:00)" };
+  var horarios = { 300:"mañana", 600:"tarde", 900:"noche" };
   var dia      = Math.floor(code / 1000);
   var horario  = code % 1000;
-  return (dias[dia] || "?") + " - " + (horarios[horario] || "?");
+  return (dias[dia] || "?") + " " + (horarios[horario] || "?");
 }
 
 function formatFecha(ts) {
@@ -518,6 +518,24 @@ function formatFecha(ts) {
 function escHtml(str) {
   if (!str) return "";
   return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// =========================================
+//   EASTER EGG: LOGO × 5 → ARCOIRIS
+// =========================================
+var logoClickCount = 0;
+var logoClickTimer = null;
+
+function handleLogoClick() {
+  logoClickCount++;
+  clearTimeout(logoClickTimer);
+  logoClickTimer = setTimeout(function() { logoClickCount = 0; }, 1500);
+  if (logoClickCount >= 5) {
+    logoClickCount = 0;
+    var overlay = document.getElementById("rainbow-overlay");
+    overlay.classList.add("active");
+    setTimeout(function() { overlay.classList.remove("active"); }, 2000);
+  }
 }
 
 // ---- INIT ----
