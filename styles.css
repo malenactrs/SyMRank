@@ -887,9 +887,11 @@ body {
   font-weight: 600;
   font-size: 0.8rem;
   color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Permite que el nombre largo haga wrap en lugar de cortarse */
+  white-space: normal;
+  overflow: visible;
+  word-break: break-word;
+  line-height: 1.3;
 }
 
 .ranking-stars { font-size: 0.7rem; line-height: 1; }

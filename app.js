@@ -211,40 +211,78 @@ function renderRanking(opiniones) {
     return;
   }
 
-  // Agrupar por profesor
+  // Agrupar por profesor (principal + acompañantes)
   var mapa = {};
-  opiniones.forEach(function(op) {
-    var nombre = (op.profesor || "").trim();
+
+  function agregarAlMapa(nombre, puntuacion) {
+    nombre = (nombre || "").trim();
     if (!nombre) return;
     if (!mapa[nombre]) mapa[nombre] = { suma: 0, cant: 0 };
-    mapa[nombre].suma += op.puntuacion || 0;
+    mapa[nombre].suma += puntuacion || 0;
     mapa[nombre].cant += 1;
+  }
+
+  opiniones.forEach(function(op) {
+    agregarAlMapa(op.profesor, op.puntuacion);
+    if (Array.isArray(op.profesoresSecundarios)) {
+      op.profesoresSecundarios.forEach(function(p) {
+        agregarAlMapa(p, op.puntuacion);
+      });
+    }
   });
 
-  // Convertir a array y ordenar
+  // Convertir a array y calcular promedio
   var lista = Object.keys(mapa).map(function(nombre) {
     return {
-      nombre: nombre,
-      promedio: mapa[nombre].suma / mapa[nombre].cant,
-      cantidad: mapa[nombre].cant
+      nombre:   nombre,
+      suma:     mapa[nombre].suma,
+      cantidad: mapa[nombre].cant,
+      promedio: mapa[nombre].suma / mapa[nombre].cant
     };
   });
 
-  lista.sort(function(a, b) { return b.promedio - a.promedio; });
-  var top5 = lista.slice(0, 5);
+  // ── Estimación Bayesiana (fórmula IMDb) ──────────────────────────────
+  // WR = (v / (v + m)) × R + (m / (v + m)) × C
+  //   R = promedio del profesor
+  //   v = cantidad de opiniones del profesor
+  //   C = promedio global de TODAS las opiniones
+  //   m = percentil 25 de la distribución de cantidad de votos (umbral dinámico)
 
-  if (top5.length === 0) {
+  // C: promedio global
+  var totalSuma  = lista.reduce(function(acc, x) { return acc + x.suma; }, 0);
+  var totalVotos = lista.reduce(function(acc, x) { return acc + x.cantidad; }, 0);
+  var C = totalVotos > 0 ? totalSuma / totalVotos : 0;
+
+  // m: percentil 25 de la distribución de cantidades
+  var cantidades = lista.map(function(x) { return x.cantidad; }).sort(function(a, b) { return a - b; });
+  var p25idx = Math.floor(cantidades.length * 0.25);
+  var m = cantidades[p25idx] || 1;
+
+  // Calcular weighted rank y agregar a cada item
+  lista.forEach(function(item) {
+    var v  = item.cantidad;
+    var R  = item.promedio;
+    item.wr = (v / (v + m)) * R + (m / (v + m)) * C;
+  });
+
+  // Ordenar por WR desc y tomar top 10
+  lista.sort(function(a, b) { return b.wr - a.wr; });
+  var top10 = lista.slice(0, 10);
+
+  if (top10.length === 0) {
     rankingEl.innerHTML = '<p class="ranking-empty">Todavía no hay datos suficientes.</p>';
     return;
   }
 
   rankingEl.innerHTML = "";
-  top5.forEach(function(item, i) {
-    var medals = ["🥇", "🥈", "🥉", "4.", "5."];
+  top10.forEach(function(item, i) {
+    var medals = ["🥇", "🥈", "🥉", "4.", "5.", "6.", "7.", "8.", "9.", "10."];
     var prom   = item.promedio.toFixed(1);
-    var stars  = renderStars(Math.round(item.promedio));
+    var wr     = item.wr.toFixed(2);
+    var stars  = renderStars(Math.round(item.wr));
     var div    = document.createElement("div");
     div.className = "ranking-item";
+    div.title = "Promedio real: " + prom + " | Score bayesiano: " + wr;
     div.innerHTML =
       '<span class="ranking-pos">' + medals[i] + '</span>' +
       '<div class="ranking-info">' +
@@ -252,7 +290,7 @@ function renderRanking(opiniones) {
         '<span class="ranking-stars">' + stars + '</span>' +
       '</div>' +
       '<div class="ranking-stats">' +
-        '<span class="ranking-prom">' + prom + ' / 5</span>' +
+        '<span class="ranking-prom">' + wr + ' / 5</span>' +
         '<span class="ranking-cant">' + item.cantidad + ' opinión' + (item.cantidad !== 1 ? "es" : "") + '</span>' +
       '</div>';
     rankingEl.appendChild(div);
