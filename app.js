@@ -379,29 +379,30 @@ function removeProfesorExtra(idx) {
 async function submitOpinion(e) {
   e.preventDefault();
   if (!validarFormulario()) return;
+  if (!checkRateLimit()) return;
 
   var dia      = parseInt(document.getElementById("f-dia").value);
   var horario  = parseInt(document.getElementById("f-horario").value);
   var diaHorario = (dia * 1000) + horario;
 
-  // Recolectar profesores secundarios
+  // Recolectar y sanitizar profesores secundarios (máx 100 chars c/u)
   var profesoresSecundarios = [];
   for (var i = 1; i <= 3; i++) {
     var inp = document.getElementById("f-profesor" + (i + 1));
     if (inp) {
-      var val = inp.value.trim();
+      var val = inp.value.trim().substring(0, 100);
       if (val) profesoresSecundarios.push(val);
     }
   }
 
   var data = {
-    profesor:              document.getElementById("f-profesor").value.trim(),
+    profesor:              document.getElementById("f-profesor").value.trim().substring(0, 100),
     profesoresSecundarios: profesoresSecundarios,
     materia:               document.getElementById("f-materia").value,
     cuatrimestre:          document.getElementById("f-cuatrimestre").value,
     anio:                  parseInt(document.getElementById("f-anio").value),
     diaHorario:            diaHorario,
-    descripcion:           document.getElementById("f-descripcion").value.trim(),
+    descripcion:           document.getElementById("f-descripcion").value.trim().substring(0, 1000),
     puntuacion:            selectedStars,
     fecha:                 firebase.firestore.FieldValue.serverTimestamp()
   };
@@ -409,6 +410,7 @@ async function submitOpinion(e) {
   setSubmitLoading(true);
   try {
     await db.collection("opiniones").add(data);
+    registrarEnvio();
     showToast("success");
     resetForm();
   } catch (err) {
@@ -419,33 +421,119 @@ async function submitOpinion(e) {
   }
 }
 
+// =========================================
+//   WHITELISTS DE VALIDACIÓN
+// =========================================
+var MATERIAS_VALIDAS = [
+  "Matemática Discreta","Análisis Matemático I","Programación Inicial",
+  "Introducción a los Sistemas de Información","Sistemas de Numeración",
+  "Principios de Calidad de Software","Álgebra y Geometría Analítica I","Física I",
+  "Programación Estructurada Básica","Introducción a la Gestión de Requisitos",
+  "Fundamentos de Sistemas Embebidos","Introducción a Proyectos Informáticos",
+  "Responsabilidad Social Universitaria","Análisis Matemático II","Física II",
+  "Tópicos de Programación","Bases de Datos","Análisis de Sistemas",
+  "Arquitectura de Computadoras","Taller de Integración","Análisis Matemático III",
+  "Algoritmos y Estructuras de Datos","Bases de Datos Aplicada",
+  "Principios de Diseño de Sistemas","Redes de Computadoras",
+  "Gestión de las Organizaciones","Álgebra y Geometría Analítica II",
+  "Paradigmas de Programación","Requisitos Avanzados","Diseño de Software",
+  "Sistemas Operativos","Seguridad de la Información","Práctica Profesional Supervisada",
+  "Probabilidad y Estadística","Programación Avanzada","Arquitecturas de Sistemas Software",
+  "Virtualización de Hardware","Auditoría y Legislación","Estadística Aplicada",
+  "Autómatas y Gramática","Programación Concurrente",
+  "Gestión Aplicada al Desarrollo de Software I","Sistemas Operativos Avanzados",
+  "Gestión de Proyectos","Matemática Aplicada","Lenguajes y Compiladores",
+  "Inteligencia Artificial","Gestión Aplicada al Desarrollo de Software II",
+  "Seguridad Aplicada y Forensia","Gestión de la Calidad en Procesos de Sistemas",
+  "Inteligencia Artificial Aplicada","Innovación y Emprendedorismo","Ciencia de Datos",
+  "Proyecto Final de Carrera","Inglés Transversal Nivel I","Inglés Transversal Nivel II",
+  "Inglés Transversal Nivel III","Inglés Transversal Nivel IV",
+  "Computación Transversal Nivel I","Computación Transversal Nivel II"
+];
+var CUATRIMESTRES_VALIDOS = ["Primer","Segundo","Tercero"];
+var DIAS_VALIDOS          = [1,2,3,4,5,6];
+var HORARIOS_VALIDOS      = [300,600,900];
+
+// =========================================
+//   RATE LIMITING (1 envío por minuto)
+// =========================================
+var RATE_LIMIT_MS = 60000;
+
+function checkRateLimit() {
+  var last = parseInt(localStorage.getItem("symrank_last_submit") || "0");
+  if (Date.now() - last < RATE_LIMIT_MS) {
+    var restante = Math.ceil((RATE_LIMIT_MS - (Date.now() - last)) / 1000);
+    showError("descripcion", "Esperá " + restante + " segundos antes de enviar otra opinión.");
+    return false;
+  }
+  return true;
+}
+
+function registrarEnvio() {
+  localStorage.setItem("symrank_last_submit", Date.now().toString());
+}
+
 // ---- VALIDACIÓN ----
 function validarFormulario() {
   var ok = true;
   ["profesor","materia","cuatrimestre","anio","dia","horario","descripcion"].forEach(clearError);
   clearError("puntuacion");
 
+  // Profesor principal: requerido, máx 100 chars
   var profesor = document.getElementById("f-profesor").value.trim();
-  if (!profesor) { showError("profesor", "El nombre del profesor es obligatorio."); ok = false; }
+  if (!profesor) {
+    showError("profesor", "El nombre del profesor es obligatorio."); ok = false;
+  } else if (profesor.length > 100) {
+    showError("profesor", "Máximo 100 caracteres."); ok = false;
+  }
 
+  // Materia: debe estar en la whitelist
   var materia = document.getElementById("f-materia").value;
-  if (!materia) { showError("materia", "Seleccioná una materia."); ok = false; }
+  if (!materia) {
+    showError("materia", "Seleccioná una materia."); ok = false;
+  } else if (MATERIAS_VALIDAS.indexOf(materia) === -1) {
+    showError("materia", "Materia no válida."); ok = false;
+  }
 
+  // Cuatrimestre: whitelist
   var cuatrimestre = document.getElementById("f-cuatrimestre").value;
-  if (!cuatrimestre) { showError("cuatrimestre", "Seleccioná el cuatrimestre."); ok = false; }
+  if (!cuatrimestre) {
+    showError("cuatrimestre", "Seleccioná el cuatrimestre."); ok = false;
+  } else if (CUATRIMESTRES_VALIDOS.indexOf(cuatrimestre) === -1) {
+    showError("cuatrimestre", "Cuatrimestre no válido."); ok = false;
+  }
 
+  // Año: rango estricto
   var anio = parseInt(document.getElementById("f-anio").value);
-  if (!anio || anio < 2000 || anio > 2099) { showError("anio", "Ingresá un año válido (2000-2099)."); ok = false; }
+  if (!anio || anio < 2000 || anio > 2099) {
+    showError("anio", "Ingresá un año válido (2000-2099)."); ok = false;
+  }
 
-  var dia = document.getElementById("f-dia").value;
-  if (!dia) { showError("dia", "Seleccioná el día."); ok = false; }
+  // Día: whitelist numérica
+  var dia = parseInt(document.getElementById("f-dia").value);
+  if (!dia) {
+    showError("dia", "Seleccioná el día."); ok = false;
+  } else if (DIAS_VALIDOS.indexOf(dia) === -1) {
+    showError("dia", "Día no válido."); ok = false;
+  }
 
-  var horario = document.getElementById("f-horario").value;
-  if (!horario) { showError("horario", "Seleccioná el horario."); ok = false; }
+  // Horario: whitelist numérica
+  var horario = parseInt(document.getElementById("f-horario").value);
+  if (!horario) {
+    showError("horario", "Seleccioná el horario."); ok = false;
+  } else if (HORARIOS_VALIDOS.indexOf(horario) === -1) {
+    showError("horario", "Horario no válido."); ok = false;
+  }
 
+  // Descripción: requerida, mín 10, máx 1000
   var desc = document.getElementById("f-descripcion").value.trim();
-  if (!desc) { showError("descripcion", "La descripción es obligatoria."); ok = false; }
-  else if (desc.length > 1000) { showError("descripcion", "Máximo 1000 caracteres."); ok = false; }
+  if (!desc) {
+    showError("descripcion", "La descripción es obligatoria."); ok = false;
+  } else if (desc.length < 10) {
+    showError("descripcion", "La descripción es muy corta (mínimo 10 caracteres)."); ok = false;
+  } else if (desc.length > 1000) {
+    showError("descripcion", "Máximo 1000 caracteres."); ok = false;
+  }
 
   if (selectedStars < 1) { showError("puntuacion", "Seleccioná una puntuación."); ok = false; }
 

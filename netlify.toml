@@ -1,0 +1,32 @@
+# ============================================================
+#  SYMRANK — Configuración de Netlify
+#  Headers de seguridad para todas las rutas
+# ============================================================
+
+[[headers]]
+  for = "/*"
+
+  [headers.values]
+
+    # ── Content Security Policy ──────────────────────────────
+    # Define exactamente qué recursos puede cargar el navegador.
+    # default-src 'self'          → solo archivos del propio sitio por defecto
+    # script-src                  → permite app.js (self) + Firebase SDK (gstatic)
+    # connect-src                 → permite llamadas AJAX/fetch solo a Firebase
+    # style-src 'unsafe-inline'   → necesario para los estilos inline del HTML
+    # frame-ancestors 'none'      → nadie puede embeber el sitio en un <iframe>
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; frame-ancestors 'none';"
+
+    # ── Clickjacking: impide que el sitio se embeba en iframes ──
+    X-Frame-Options = "DENY"
+
+    # ── MIME sniffing: el navegador no adivina el tipo de archivo ──
+    # Previene que un archivo .txt sea ejecutado como .js
+    X-Content-Type-Options = "nosniff"
+
+    # ── Referrer: no filtra la URL completa al navegar a otros sitios ──
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # ── Permissions Policy: deshabilita APIs del dispositivo que no usás ──
+    # Tu sitio no necesita cámara, micrófono, geolocalización ni más
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()"
