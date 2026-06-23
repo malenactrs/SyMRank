@@ -96,7 +96,7 @@ async function cargarOpiniones() {
 
   } catch (err) {
     spinner.style.display = "none";
-    container.innerHTML = '<p style="color:#ef4444;padding:20px">Error al cargar: ' + err.message + '. Verificá la config de Firebase en app.js.</p>';
+    container.innerHTML = '<p style="color:#ef4444;padding:20px">Error al cargar las opiniones. Intentá recargar la página.</p>';
     console.error("Firebase error:", err);
   }
 }
@@ -211,40 +211,78 @@ function renderRanking(opiniones) {
     return;
   }
 
-  // Agrupar por profesor
+  // Agrupar por profesor (principal + acompañantes)
   var mapa = {};
-  opiniones.forEach(function(op) {
-    var nombre = (op.profesor || "").trim();
+
+  function agregarAlMapa(nombre, puntuacion) {
+    nombre = (nombre || "").trim();
     if (!nombre) return;
     if (!mapa[nombre]) mapa[nombre] = { suma: 0, cant: 0 };
-    mapa[nombre].suma += op.puntuacion || 0;
+    mapa[nombre].suma += puntuacion || 0;
     mapa[nombre].cant += 1;
+  }
+
+  opiniones.forEach(function(op) {
+    agregarAlMapa(op.profesor, op.puntuacion);
+    if (Array.isArray(op.profesoresSecundarios)) {
+      op.profesoresSecundarios.forEach(function(p) {
+        agregarAlMapa(p, op.puntuacion);
+      });
+    }
   });
 
-  // Convertir a array y ordenar
+  // Convertir a array y calcular promedio
   var lista = Object.keys(mapa).map(function(nombre) {
     return {
-      nombre: nombre,
-      promedio: mapa[nombre].suma / mapa[nombre].cant,
-      cantidad: mapa[nombre].cant
+      nombre:   nombre,
+      suma:     mapa[nombre].suma,
+      cantidad: mapa[nombre].cant,
+      promedio: mapa[nombre].suma / mapa[nombre].cant
     };
   });
 
-  lista.sort(function(a, b) { return b.promedio - a.promedio; });
-  var top5 = lista.slice(0, 5);
+  // ── Estimación Bayesiana (fórmula IMDb) ──────────────────────────────
+  // WR = (v / (v + m)) × R + (m / (v + m)) × C
+  //   R = promedio del profesor
+  //   v = cantidad de opiniones del profesor
+  //   C = promedio global de TODAS las opiniones
+  //   m = percentil 25 de la distribución de cantidad de votos (umbral dinámico)
 
-  if (top5.length === 0) {
+  // C: promedio global
+  var totalSuma  = lista.reduce(function(acc, x) { return acc + x.suma; }, 0);
+  var totalVotos = lista.reduce(function(acc, x) { return acc + x.cantidad; }, 0);
+  var C = totalVotos > 0 ? totalSuma / totalVotos : 0;
+
+  // m: percentil 25 de la distribución de cantidades
+  var cantidades = lista.map(function(x) { return x.cantidad; }).sort(function(a, b) { return a - b; });
+  var p25idx = Math.floor(cantidades.length * 0.25);
+  var m = cantidades[p25idx] || 1;
+
+  // Calcular weighted rank y agregar a cada item
+  lista.forEach(function(item) {
+    var v  = item.cantidad;
+    var R  = item.promedio;
+    item.wr = (v / (v + m)) * R + (m / (v + m)) * C;
+  });
+
+  // Ordenar por WR desc y tomar top 10
+  lista.sort(function(a, b) { return b.wr - a.wr; });
+  var top10 = lista.slice(0, 10);
+
+  if (top10.length === 0) {
     rankingEl.innerHTML = '<p class="ranking-empty">Todavía no hay datos suficientes.</p>';
     return;
   }
 
   rankingEl.innerHTML = "";
-  top5.forEach(function(item, i) {
-    var medals = ["🥇", "🥈", "🥉", "4.", "5."];
+  top10.forEach(function(item, i) {
+    var medals = ["🥇", "🥈", "🥉", "4.", "5.", "6.", "7.", "8.", "9.", "10."];
     var prom   = item.promedio.toFixed(1);
-    var stars  = renderStars(Math.round(item.promedio));
+    var wr     = item.wr.toFixed(2);
+    var stars  = renderStars(Math.round(item.wr));
     var div    = document.createElement("div");
     div.className = "ranking-item";
+    div.title = "Promedio real: " + prom + " | Score bayesiano: " + wr;
     div.innerHTML =
       '<span class="ranking-pos">' + medals[i] + '</span>' +
       '<div class="ranking-info">' +
@@ -252,7 +290,7 @@ function renderRanking(opiniones) {
         '<span class="ranking-stars">' + stars + '</span>' +
       '</div>' +
       '<div class="ranking-stats">' +
-        '<span class="ranking-prom">' + prom + ' / 5</span>' +
+        '<span class="ranking-prom">' + wr + ' / 5</span>' +
         '<span class="ranking-cant">' + item.cantidad + ' opinión' + (item.cantidad !== 1 ? "es" : "") + '</span>' +
       '</div>';
     rankingEl.appendChild(div);
@@ -329,7 +367,9 @@ function addProfesorExtra() {
 function removeProfesorExtra(idx) {
   var row = document.getElementById("extra-prof-row-" + idx);
   if (row) row.remove();
-  extraProfCount--;
+  // Contar los elementos reales del DOM en lugar de confiar en el contador,
+  // para evitar desincronización si se eliminan en orden no secuencial.
+  extraProfCount = document.querySelectorAll(".extra-prof-row").length;
   var addBtn = document.getElementById("btn-add-prof");
   addBtn.disabled = false;
   addBtn.style.opacity = "1";
@@ -341,29 +381,30 @@ function removeProfesorExtra(idx) {
 async function submitOpinion(e) {
   e.preventDefault();
   if (!validarFormulario()) return;
+  if (!checkRateLimit()) return;
 
   var dia      = parseInt(document.getElementById("f-dia").value);
   var horario  = parseInt(document.getElementById("f-horario").value);
   var diaHorario = (dia * 1000) + horario;
 
-  // Recolectar profesores secundarios
+  // Recolectar y sanitizar profesores secundarios (máx 100 chars c/u)
   var profesoresSecundarios = [];
   for (var i = 1; i <= 3; i++) {
     var inp = document.getElementById("f-profesor" + (i + 1));
     if (inp) {
-      var val = inp.value.trim();
+      var val = inp.value.trim().substring(0, 100);
       if (val) profesoresSecundarios.push(val);
     }
   }
 
   var data = {
-    profesor:              document.getElementById("f-profesor").value.trim(),
+    profesor:              document.getElementById("f-profesor").value.trim().substring(0, 100),
     profesoresSecundarios: profesoresSecundarios,
     materia:               document.getElementById("f-materia").value,
     cuatrimestre:          document.getElementById("f-cuatrimestre").value,
     anio:                  parseInt(document.getElementById("f-anio").value),
     diaHorario:            diaHorario,
-    descripcion:           document.getElementById("f-descripcion").value.trim(),
+    descripcion:           document.getElementById("f-descripcion").value.trim().substring(0, 1000),
     puntuacion:            selectedStars,
     fecha:                 firebase.firestore.FieldValue.serverTimestamp()
   };
@@ -371,13 +412,112 @@ async function submitOpinion(e) {
   setSubmitLoading(true);
   try {
     await db.collection("opiniones").add(data);
+    registrarEnvio();                    // bloqueo UI (sessionStorage)
+    await registrarCooldownEnServidor(); // bloqueo real (Firestore)
     showToast("success");
     resetForm();
   } catch (err) {
-    showToast("error");
+    if (err.code === "permission-denied") {
+      showError("descripcion", "No se pudo publicar: permiso denegado. Si enviaste una opinión recientemente, esperá unos minutos.");
+    } else {
+      showToast("error");
+    }
     console.error("Error guardando opinión:", err);
   } finally {
     setSubmitLoading(false);
+  }
+}
+
+// =========================================
+//   WHITELISTS DE VALIDACIÓN
+// =========================================
+var MATERIAS_VALIDAS = [
+  "Matemática Discreta","Análisis Matemático I","Programación Inicial",
+  "Introducción a los Sistemas de Información","Sistemas de Numeración",
+  "Principios de Calidad de Software","Álgebra y Geometría Analítica I","Física I",
+  "Programación Estructurada Básica","Introducción a la Gestión de Requisitos",
+  "Fundamentos de Sistemas Embebidos","Introducción a Proyectos Informáticos",
+  "Responsabilidad Social Universitaria","Análisis Matemático II","Física II",
+  "Tópicos de Programación","Bases de Datos","Análisis de Sistemas",
+  "Arquitectura de Computadoras","Taller de Integración","Análisis Matemático III",
+  "Algoritmos y Estructuras de Datos","Bases de Datos Aplicada",
+  "Principios de Diseño de Sistemas","Redes de Computadoras",
+  "Gestión de las Organizaciones","Álgebra y Geometría Analítica II",
+  "Paradigmas de Programación","Requisitos Avanzados","Diseño de Software",
+  "Sistemas Operativos","Seguridad de la Información","Práctica Profesional Supervisada",
+  "Probabilidad y Estadística","Programación Avanzada","Arquitecturas de Sistemas Software",
+  "Virtualización de Hardware","Auditoría y Legislación","Estadística Aplicada",
+  "Autómatas y Gramática","Programación Concurrente",
+  "Gestión Aplicada al Desarrollo de Software I","Sistemas Operativos Avanzados",
+  "Gestión de Proyectos","Matemática Aplicada","Lenguajes y Compiladores",
+  "Inteligencia Artificial","Gestión Aplicada al Desarrollo de Software II",
+  "Seguridad Aplicada y Forensia","Gestión de la Calidad en Procesos de Sistemas",
+  "Inteligencia Artificial Aplicada","Innovación y Emprendedorismo","Ciencia de Datos",
+  "Proyecto Final de Carrera","Inglés Transversal Nivel I","Inglés Transversal Nivel II",
+  "Inglés Transversal Nivel III","Inglés Transversal Nivel IV",
+  "Computación Transversal Nivel I","Computación Transversal Nivel II"
+];
+var CUATRIMESTRES_VALIDOS = ["Primer","Segundo","Tercero"];
+var DIAS_VALIDOS          = [1,2,3,4,5,6];
+var HORARIOS_VALIDOS      = [300,600,900];
+
+// =========================================
+//   SESSION ID — fingerprint por sesión
+//   Usamos sessionStorage para que el ID
+//   cambie al cerrar la pestaña, pero se
+//   mantenga durante la sesión activa.
+//   crypto.randomUUID() es soportado en
+//   todos los browsers modernos.
+// =========================================
+var SESSION_ID = (function() {
+  var sid = sessionStorage.getItem("symrank_sid");
+  if (!sid) {
+    sid = (typeof crypto !== "undefined" && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2) + Date.now().toString(36);
+    sessionStorage.setItem("symrank_sid", sid);
+  }
+  return sid;
+})();
+
+// =========================================
+//   RATE LIMITING — server-side via Firestore
+//   El cooldown real lo imponen las Security
+//   Rules (300s). Acá solo bloqueamos en UI
+//   para no generar writes innecesarios.
+// =========================================
+var RATE_LIMIT_MS = 300000; // 5 minutos — debe coincidir con las Rules
+
+function checkRateLimit() {
+  var last = parseInt(sessionStorage.getItem("symrank_last_submit") || "0");
+  if (Date.now() - last < RATE_LIMIT_MS) {
+    var restante = Math.ceil((RATE_LIMIT_MS - (Date.now() - last)) / 1000);
+    var min = Math.floor(restante / 60);
+    var seg = restante % 60;
+    var msg = min > 0
+      ? "Esperá " + min + " min " + seg + " seg antes de enviar otra opinión."
+      : "Esperá " + seg + " segundos antes de enviar otra opinión.";
+    showError("descripcion", msg);
+    return false;
+  }
+  return true;
+}
+
+function registrarEnvio() {
+  sessionStorage.setItem("symrank_last_submit", Date.now().toString());
+}
+
+// Registra el cooldown en Firestore usando el SESSION_ID como fingerprint.
+// Las Security Rules validan que lastSubmit sea un serverTimestamp real.
+async function registrarCooldownEnServidor() {
+  try {
+    await db.collection("rate_limits").doc(SESSION_ID).set({
+      lastSubmit: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (err) {
+    // Si falla el registro del cooldown, no bloqueamos al usuario —
+    // las Rules del servidor igual lo frenarán si intenta reenviar.
+    console.warn("No se pudo registrar cooldown:", err);
   }
 }
 
@@ -387,27 +527,61 @@ function validarFormulario() {
   ["profesor","materia","cuatrimestre","anio","dia","horario","descripcion"].forEach(clearError);
   clearError("puntuacion");
 
+  // Profesor principal: requerido, máx 100 chars
   var profesor = document.getElementById("f-profesor").value.trim();
-  if (!profesor) { showError("profesor", "El nombre del profesor es obligatorio."); ok = false; }
+  if (!profesor) {
+    showError("profesor", "El nombre del profesor es obligatorio."); ok = false;
+  } else if (profesor.length > 100) {
+    showError("profesor", "Máximo 100 caracteres."); ok = false;
+  }
 
+  // Materia: debe estar en la whitelist
   var materia = document.getElementById("f-materia").value;
-  if (!materia) { showError("materia", "Seleccioná una materia."); ok = false; }
+  if (!materia) {
+    showError("materia", "Seleccioná una materia."); ok = false;
+  } else if (MATERIAS_VALIDAS.indexOf(materia) === -1) {
+    showError("materia", "Materia no válida."); ok = false;
+  }
 
+  // Cuatrimestre: whitelist
   var cuatrimestre = document.getElementById("f-cuatrimestre").value;
-  if (!cuatrimestre) { showError("cuatrimestre", "Seleccioná el cuatrimestre."); ok = false; }
+  if (!cuatrimestre) {
+    showError("cuatrimestre", "Seleccioná el cuatrimestre."); ok = false;
+  } else if (CUATRIMESTRES_VALIDOS.indexOf(cuatrimestre) === -1) {
+    showError("cuatrimestre", "Cuatrimestre no válido."); ok = false;
+  }
 
+  // Año: rango estricto
   var anio = parseInt(document.getElementById("f-anio").value);
-  if (!anio || anio < 2000 || anio > 2099) { showError("anio", "Ingresá un año válido (2000-2099)."); ok = false; }
+  if (!anio || anio < 2000 || anio > 2099) {
+    showError("anio", "Ingresá un año válido (2000-2099)."); ok = false;
+  }
 
-  var dia = document.getElementById("f-dia").value;
-  if (!dia) { showError("dia", "Seleccioná el día."); ok = false; }
+  // Día: whitelist numérica
+  var dia = parseInt(document.getElementById("f-dia").value);
+  if (!dia) {
+    showError("dia", "Seleccioná el día."); ok = false;
+  } else if (DIAS_VALIDOS.indexOf(dia) === -1) {
+    showError("dia", "Día no válido."); ok = false;
+  }
 
-  var horario = document.getElementById("f-horario").value;
-  if (!horario) { showError("horario", "Seleccioná el horario."); ok = false; }
+  // Horario: whitelist numérica
+  var horario = parseInt(document.getElementById("f-horario").value);
+  if (!horario) {
+    showError("horario", "Seleccioná el horario."); ok = false;
+  } else if (HORARIOS_VALIDOS.indexOf(horario) === -1) {
+    showError("horario", "Horario no válido."); ok = false;
+  }
 
+  // Descripción: requerida, mín 10, máx 1000
   var desc = document.getElementById("f-descripcion").value.trim();
-  if (!desc) { showError("descripcion", "La descripción es obligatoria."); ok = false; }
-  else if (desc.length > 1000) { showError("descripcion", "Máximo 1000 caracteres."); ok = false; }
+  if (!desc) {
+    showError("descripcion", "La descripción es obligatoria."); ok = false;
+  } else if (desc.length < 10) {
+    showError("descripcion", "La descripción es muy corta (mínimo 10 caracteres)."); ok = false;
+  } else if (desc.length > 1000) {
+    showError("descripcion", "Máximo 1000 caracteres."); ok = false;
+  }
 
   if (selectedStars < 1) { showError("puntuacion", "Seleccioná una puntuación."); ok = false; }
 
